@@ -1,21 +1,37 @@
+import { selectFeedOrders } from '@slices/feedSlice';
+import { selectIngredients } from '@slices/ingredientsSlice';
+import { fetchOrderByNumber, selectFetchedOrder } from '@slices/orderDetailsSlice';
+import { selectProfileOrders } from '@slices/profileOrdersSlice';
 import { Preloader, OrderInfoUI } from '@ui';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+
+import { useDispatch, useSelector } from '@services/store';
 
 import type { TIngredient } from '@utils-types';
 
 export const OrderInfo = (): React.JSX.Element => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0,
-  };
+  const dispatch = useDispatch();
+  const { number } = useParams();
+  const orderNumber = Number(number);
 
-  const ingredients: TIngredient[] = [];
+  const feedOrders = useSelector(selectFeedOrders);
+  const profileOrders = useSelector(selectProfileOrders);
+  const fetchedOrder = useSelector((state) => selectFetchedOrder(state, orderNumber));
+  const ingredients = useSelector(selectIngredients);
+
+  const orderData =
+    feedOrders.find((order) => order.number === orderNumber) ??
+    profileOrders.find((order) => order.number === orderNumber) ??
+    fetchedOrder;
+
+  const isOrderInStore = Boolean(orderData);
+
+  useEffect(() => {
+    if (!isOrderInStore) {
+      void dispatch(fetchOrderByNumber(orderNumber));
+    }
+  }, [dispatch, isOrderInStore, orderNumber]);
 
   /**
    * использование useMemo не обязательно
