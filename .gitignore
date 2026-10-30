@@ -26,7 +26,6 @@ storybook-static
 *.sw?
 
 playwright-report
-coverage
 test-results
 *storybook.log
 
