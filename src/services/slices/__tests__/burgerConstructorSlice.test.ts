@@ -60,6 +60,20 @@ const filledState: TConstructorState = {
   ingredients: [withId(main, 'main-id'), withId(sauce, 'sauce-id')],
 };
 
+/**
+ * Для проверки границ перемещения нужно минимум три начинки: при двух элементах
+ * splice с выходом за границу даёт тот же порядок, что и «ничего не делать»,
+ * и тест проходил бы даже без проверки границ в редьюсере.
+ */
+const threeFillingsState: TConstructorState = {
+  bun: withId(bun, 'bun-id'),
+  ingredients: [
+    withId(main, 'main-id'),
+    withId(sauce, 'sauce-id'),
+    withId(main, 'main-id-2'),
+  ],
+};
+
 const mockOrder = {
   _id: 'order-1',
   status: 'done',
@@ -163,22 +177,58 @@ describe('burgerConstructorReducer', () => {
       expect(state.ingredients.map((item) => item.id)).toEqual(['sauce-id', 'main-id']);
     });
 
+    test('сдвигает среднюю начинку вверх и вниз в списке из трёх', () => {
+      const up = burgerConstructorReducer(
+        threeFillingsState,
+        moveIngredient({ index: 1, offset: -1 })
+      );
+      const down = burgerConstructorReducer(
+        threeFillingsState,
+        moveIngredient({ index: 1, offset: 1 })
+      );
+
+      expect(up.ingredients.map((item) => item.id)).toEqual([
+        'sauce-id',
+        'main-id',
+        'main-id-2',
+      ]);
+      expect(down.ingredients.map((item) => item.id)).toEqual([
+        'main-id',
+        'main-id-2',
+        'sauce-id',
+      ]);
+    });
+
     test('не двигает первую начинку выше начала списка', () => {
       const state = burgerConstructorReducer(
-        filledState,
+        threeFillingsState,
         moveIngredient({ index: 0, offset: -1 })
       );
 
-      expect(state.ingredients).toEqual(filledState.ingredients);
+      expect(state).toBe(threeFillingsState);
     });
 
     test('не двигает последнюю начинку ниже конца списка', () => {
       const state = burgerConstructorReducer(
-        filledState,
-        moveIngredient({ index: 1, offset: 1 })
+        threeFillingsState,
+        moveIngredient({ index: 2, offset: 1 })
       );
 
-      expect(state.ingredients).toEqual(filledState.ingredients);
+      expect(state).toBe(threeFillingsState);
+    });
+
+    test('не двигает начинку, если смещение выводит за границы списка', () => {
+      const tooFarDown = burgerConstructorReducer(
+        threeFillingsState,
+        moveIngredient({ index: 1, offset: 2 })
+      );
+      const tooFarUp = burgerConstructorReducer(
+        threeFillingsState,
+        moveIngredient({ index: 1, offset: -2 })
+      );
+
+      expect(tooFarDown).toBe(threeFillingsState);
+      expect(tooFarUp).toBe(threeFillingsState);
     });
   });
 

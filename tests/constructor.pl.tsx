@@ -147,14 +147,14 @@ test.describe('Добавление ингредиентов в конструк
   });
 
   test('в пустом конструкторе показаны подсказки и нулевая стоимость', async ({
-                                                                                page,
-                                                                              }) => {
+    page,
+  }) => {
     await expectConstructorEmpty(page);
   });
 
   test('булка добавляется в конструктор сверху и снизу и учитывается в цене дважды', async ({
-                                                                                              page,
-                                                                                            }) => {
+    page,
+  }) => {
     await addToConstructor(page, BUN);
 
     await expect(page.getByTestId('constructor-bun-1')).toContainText(
@@ -203,8 +203,8 @@ test.describe('Модальное окно с описанием ингреди�
 
   for (const ingredient of [BUN, MAIN, SAUCE]) {
     test(`открывается по клику и показывает данные ингредиента «${ingredient.name}»`, async ({
-                                                                                               page,
-                                                                                             }) => {
+      page,
+    }) => {
       await openIngredientModal(page, ingredient);
 
       const modal = getModal(page);
@@ -220,9 +220,10 @@ test.describe('Модальное окно с описанием ингреди�
       ];
 
       for (const [label, value] of nutrition) {
-        await expect(
-          modal.getByRole('listitem').filter({ hasText: label })
-        ).toContainText(String(value));
+        const row = modal.getByRole('listitem').filter({ hasText: label });
+
+        // exact: true сравнивает весь текст элемента, а не подстроку
+        await expect(row.getByText(String(value), { exact: true })).toBeVisible();
       }
     });
   }
@@ -271,8 +272,8 @@ test.describe('Оформление заказа', () => {
   });
 
   test('перед заказом в cookie и localStorage подставлены фейковые токены', async ({
-                                                                                     page,
-                                                                                   }) => {
+    page,
+  }) => {
     const cookies = await page.context().cookies(BASE_URL);
     const refreshToken = await page.evaluate(() => localStorage.getItem('refreshToken'));
 
@@ -283,8 +284,8 @@ test.describe('Оформление заказа', () => {
   });
 
   test('заказ создаётся: открывается модальное окно с номером заказа, конструктор очищается, окно закрывается', async ({
-                                                                                                                         page,
-                                                                                                                       }) => {
+    page,
+  }) => {
     await addToConstructor(page, BUN);
     await addToConstructor(page, MAIN);
     await addToConstructor(page, SAUCE);
